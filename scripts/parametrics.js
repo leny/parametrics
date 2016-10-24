@@ -29,74 +29,83 @@ window.RandomEQ.prototype.getNext = function() {
     "use strict";
 
     var oCanvas, iWidth, iHeight, oContext,
-        fInit, fGetParametrics, fDraw;
+        fInit, fFillForm, fExtractForm, fExtractSeed, fDraw, fDrawWave;
+
+    fExtractSeed = function( sSeed ) {
+        var oParams, iWaves,
+            oGenerator = new MersenneTwister( sSeed );
+
+        oParams = {
+            "width": 1920,
+            "height": 1080,
+            "x": 960,
+            "y": 540,
+            "waves": [],
+        };
+
+        iWaves = Math.ceil( oGenerator.random() * 3 );
+
+        while ( iWaves-- ) {
+            oParams.waves.push( {
+                "color": "rgba( " + Math.floor( oGenerator.random() * 255 ) + ", " + Math.floor( oGenerator.random() * 255 ) + ", " + Math.floor( oGenerator.random() * 255 ) + ", " + ( 0.25 + oGenerator.random() * 0.75 ) + " )",
+                "eq": [
+                    new RandomEQ( oGenerator.random() * -1 * 1080 / 4, oGenerator.random() * -1 * 10 ),
+                    new RandomEQ( oGenerator.random() * -1 * 1080 / 3, oGenerator.random() * 10 ),
+                    new RandomEQ( oGenerator.random() * -1 * 1080 / 2, oGenerator.random() * 10 ),
+                    new RandomEQ( oGenerator.random() * -1 * 1080 / 2, oGenerator.random() * -1 * 10 )
+                ],
+                "loops": Math.round( oGenerator.random() * 720 ),
+                "thickness": Math.ceil( oGenerator.random() * 3 ),
+            } );
+        }
+
+        return oParams;
+    };
 
     fInit = function() {
-        var oParams;
+        var iSeed, oParams;
 
         oCanvas = document.querySelector( "canvas" );
         if ( !( oContext = oCanvas.getContext( "2d" ) ) ) {
             return console.error( "Seriously, dude?" );
         }
-        iWidth = oCanvas.clientWidth;
-        iHeight = oCanvas.clientHeight;
 
-        oCanvas.width = iWidth * 2;
-        oCanvas.height = iHeight * 2;
+        if ( location.hash ) {
+            iSeed = parseInt( location.hash.replace( "#", "" ) );
+        }
 
-        oContext.clearRect( 0, 0, iWidth * 2, iHeight * 2 );
+        iSeed = isNaN( iSeed ) ? Math.round( Math.random() * 1000000000 * 1000000000 ) : iSeed;
+
+        fDraw( iSeed );
+
+        document.querySelector( ".frame" ).addEventListener( "click", function( oEvent ) {
+            oEvent.preventDefault();
+            fDraw( Math.round( Math.random() * 1000000000 * 1000000000 ) );
+        } );
+    };
+
+    fDraw = function( iSeed ) {
+        var oParams = fExtractSeed( iSeed );
+
+        location.hash = iSeed;
+
+        oCanvas.width = oParams.width;
+        oCanvas.height = oParams.height;
+        oContext.clearRect( 0, 0, oParams.width, oParams.height );
         oContext.fillStyle = "white";
-        oContext.fillRect( 0, 0, iWidth * 2, iHeight * 2 );
-        oContext.translate( iWidth, iHeight );
+        oContext.fillRect( 0, 0, oParams.width, oParams.height );
+        oContext.translate( oParams.x, oParams.y );
 
-        oParams = {
-            "color": "rgba( " + Math.floor( Math.random() * 255 ) + ", " + Math.floor( Math.random() * 255 ) + ", " + Math.floor( Math.random() * 255 ) + ", " + ( 0.25 + Math.random() * 0.75 ) + " )",
-            "eq": [
-                new RandomEQ( Math.random() * -1 * iWidth / 3, Math.random() * Math.random() * -1 * 10 ),
-                new RandomEQ( Math.random() * -1 * iWidth / 2, Math.random() * Math.random() * 10 ),
-                new RandomEQ( Math.random() * -1 * iWidth / 3, Math.random() * Math.random() * 10 ),
-                new RandomEQ( Math.random() * -1 * iWidth, Math.random() * Math.random() * -1 * 10 )
-            ],
-            "loops": 90 + Math.round( Math.random() * 90 ) + Math.round( Math.random() * 180 ) * Math.round( Math.random() * 2 ),
-            "thickness": Math.ceil( Math.random() * 3 ),
-        };
+        oParams.waves.forEach( fDrawWave );
+    }
 
-        fDraw( oParams );
-
-        oParams = {
-            "color": "rgba( " + Math.floor( Math.random() * 255 ) + ", " + Math.floor( Math.random() * 255 ) + ", " + Math.floor( Math.random() * 255 ) + ", " + ( 0.25 + Math.random() * 0.75 ) + " )",
-            "eq": [
-                new RandomEQ( -135, Math.random() * Math.random() * -1 * 10 ),
-                new RandomEQ( -165, Math.random() * Math.random() * 10 ),
-                new RandomEQ( 150, Math.random() * Math.random() * 10 ),
-                new RandomEQ( 135, Math.random() * Math.random() * -1 * 10 )
-            ],
-            "loops": 90 + Math.round( Math.random() * 90 ) + Math.round( Math.random() * 180 ) * Math.round( Math.random() * 2 ),
-            "thickness": Math.ceil( Math.random() * 3 ),
-        };
-
-        fDraw( oParams );
-    };
-
-    fGetParametrics = function( iEQOneRadius, iEQTwoRadius, iEQThreeRadius, iEQFourRadius, iLoopsCount ) {
-        return {
-            "eq": [
-                new RandomEQ( iEQOneRadius, Math.random() * Math.random() * -1 * 10 ),
-                new RandomEQ( iEQTwoRadius, Math.random() * Math.random() * 10 ),
-                new RandomEQ( iEQThreeRadius, Math.random() * Math.random() * 10 ),
-                new RandomEQ( iEQFourRadius, Math.random() * Math.random() * -1 * 10 )
-            ],
-            "loops": iLoopsCount,
-        };
-    };
-
-    fDraw = function( oParams ) {
+    fDrawWave = function( oParams ) {
         var aPos1 = oParams.eq[ 0 ].getNext(),
             aPos2 = oParams.eq[ 0 ].getNext(),
             iLoopCount = oParams.loops,
             aLoopPosOne, aLoopPosTwo, aLoopPosThree, aLoopPosFour;
 
-        oContext.strokewidth = oParams.thickness;
+        oContext.strokeWidth = oParams.thickness;
         oContext.strokeStyle = oParams.color;
 
         oContext.beginPath( aPos1[ 0 ] + aPos2[ 0 ], aPos1[ 1 ], aPos2[ 1 ] );
