@@ -32,6 +32,8 @@ window.RandomEQ.prototype.getNext = function() {
         fInit, fGetParametrics, fDraw;
 
     fInit = function() {
+        var oParams;
+
         oCanvas = document.querySelector( "canvas" );
         if ( !( oContext = oCanvas.getContext( "2d" ) ) ) {
             return console.error( "Seriously, dude?" );
@@ -43,35 +45,59 @@ window.RandomEQ.prototype.getNext = function() {
         oCanvas.height = iHeight * 2;
 
         oContext.clearRect( 0, 0, iWidth * 2, iHeight * 2 );
+        oContext.fillStyle = "white";
+        oContext.fillRect( 0, 0, iWidth * 2, iHeight * 2 );
         oContext.translate( iWidth, iHeight );
 
-        fDraw();
-        fDraw( true );
+        oParams = {
+            "color": "rgba( " + Math.floor( Math.random() * 255 ) + ", " + Math.floor( Math.random() * 255 ) + ", " + Math.floor( Math.random() * 255 ) + ", " + ( 0.25 + Math.random() * 0.75 ) + " )",
+            "eq": [
+                new RandomEQ( Math.random() * -1 * iWidth / 3, Math.random() * Math.random() * -1 * 10 ),
+                new RandomEQ( Math.random() * -1 * iWidth / 2, Math.random() * Math.random() * 10 ),
+                new RandomEQ( Math.random() * -1 * iWidth / 3, Math.random() * Math.random() * 10 ),
+                new RandomEQ( Math.random() * -1 * iWidth, Math.random() * Math.random() * -1 * 10 )
+            ],
+            "loops": 90 + Math.round( Math.random() * 90 ) + Math.round( Math.random() * 180 ) * Math.round( Math.random() * 2 ),
+            "thickness": Math.ceil( Math.random() * 3 ),
+        };
+
+        fDraw( oParams );
+
+        oParams = {
+            "color": "rgba( " + Math.floor( Math.random() * 255 ) + ", " + Math.floor( Math.random() * 255 ) + ", " + Math.floor( Math.random() * 255 ) + ", " + ( 0.25 + Math.random() * 0.75 ) + " )",
+            "eq": [
+                new RandomEQ( -135, Math.random() * Math.random() * -1 * 10 ),
+                new RandomEQ( -165, Math.random() * Math.random() * 10 ),
+                new RandomEQ( 150, Math.random() * Math.random() * 10 ),
+                new RandomEQ( 135, Math.random() * Math.random() * -1 * 10 )
+            ],
+            "loops": 90 + Math.round( Math.random() * 90 ) + Math.round( Math.random() * 180 ) * Math.round( Math.random() * 2 ),
+            "thickness": Math.ceil( Math.random() * 3 ),
+        };
+
+        fDraw( oParams );
     };
 
-    fGetParametrics = function( bMagic ) {
-        var iRandomParam = Math.random() * 10;
-
+    fGetParametrics = function( iEQOneRadius, iEQTwoRadius, iEQThreeRadius, iEQFourRadius, iLoopsCount ) {
         return {
-            "rand": iRandomParam,
             "eq": [
-                new RandomEQ( ( bMagic ? -135 : Math.random() * -1 * iWidth / 3 ), Math.random() * -1 * iRandomParam ),
-                new RandomEQ( ( bMagic ? -165 : Math.random() * -1 * iWidth / 2 ), Math.random() * iRandomParam ),
-                new RandomEQ( ( bMagic ? 150 : Math.random() * -1 * iWidth / 3 ), Math.random() * iRandomParam ),
-                new RandomEQ( ( bMagic ? 135 : Math.random() * -1 * iWidth ), Math.random() * iRandomParam )
+                new RandomEQ( iEQOneRadius, Math.random() * Math.random() * -1 * 10 ),
+                new RandomEQ( iEQTwoRadius, Math.random() * Math.random() * 10 ),
+                new RandomEQ( iEQThreeRadius, Math.random() * Math.random() * 10 ),
+                new RandomEQ( iEQFourRadius, Math.random() * Math.random() * -1 * 10 )
             ],
+            "loops": iLoopsCount,
         };
     };
 
-    fDraw = function( bMagic ) {
-        var oParams = fGetParametrics( bMagic ),
-            aPos1 = oParams.eq[ 0 ].getNext(),
+    fDraw = function( oParams ) {
+        var aPos1 = oParams.eq[ 0 ].getNext(),
             aPos2 = oParams.eq[ 0 ].getNext(),
-            iLoopCount = 180 + Math.round( Math.random() * 180 ) * Math.round( Math.random() * 2 ),
+            iLoopCount = oParams.loops,
             aLoopPosOne, aLoopPosTwo, aLoopPosThree, aLoopPosFour;
 
-        oContext.strokewidth = Math.ceil( Math.random() * 3 );
-        oContext.strokeStyle = "rgba( " + Math.floor( Math.random() * 255 ) + ", " + Math.floor( Math.random() * 255 ) + ", " + Math.floor( Math.random() * 255 ) + ", " + ( 0.25 + Math.random() * 0.75 ) + " )";
+        oContext.strokewidth = oParams.thickness;
+        oContext.strokeStyle = oParams.color;
 
         oContext.beginPath( aPos1[ 0 ] + aPos2[ 0 ], aPos1[ 1 ], aPos2[ 1 ] );
 
